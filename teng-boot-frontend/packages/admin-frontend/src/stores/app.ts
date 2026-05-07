@@ -1,0 +1,22 @@
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+
+export const useAppStore = defineStore('app', () => {
+  const sidebarCollapsed = ref(false)
+
+  /** 切换侧边栏折叠状态 */
+  function toggleSidebar() {
+    sidebarCollapsed.value = !sidebarCollapsed.value
+  }
+
+  /** 设置侧边栏折叠状态 */
+  function setSidebarCollapsed(val: boolean) {
+    sidebarCollapsed.value = val
+  }
+
+  return {
+    sidebarCollapsed,
+    toggleSidebar,
+    setSidebarCollapsed,
+  }
+})

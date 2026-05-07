@@ -1,0 +1,28 @@
+package com.lt.boot.config;
+
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * Knife4j 接口文档配置
+ * @author: ~Teng~
+ */
+@Configuration
+public class Knife4jConfig {
+
+    @Bean
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("后端脚手架接口文档")
+                        .description("后端脚手架接口文档")
+                        .version("1.0")
+                        .contact(new Contact()
+                                .name("木子Teng")
+                                .email("teng2002823@outlook.com")
+                                .url("https://github.com/CodeTeng")));
+    }
+}

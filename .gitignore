@@ -1,0 +1,36 @@
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.settings/
+.classpath
+.project
+.factorypath
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backend
+teng-boot-backend/target/
+teng-boot-backend/*.log
+
+# Frontend
+teng-boot-frontend/node_modules/
+teng-boot-frontend/dist/
+teng-boot-frontend/.vite/
+teng-boot-frontend/*.local
+teng-boot-frontend/.env.local
+teng-boot-frontend/.env.*.local
+
+# Claude
+.claude/plans/
+.claude/settings.local.json
+
+# Secrets
+*.pem
+*.key
+application-dev.yml
+teng-boot-backend/.claude/settings.local.json

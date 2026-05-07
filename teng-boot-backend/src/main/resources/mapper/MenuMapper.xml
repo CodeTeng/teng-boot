@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lt.boot.mapper.MenuMapper">
+
+    <resultMap id="BaseResultMap" type="com.lt.boot.model.entity.Menu">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="menuName" column="menu_name" jdbcType="VARCHAR"/>
+        <result property="parentId" column="parent_id" jdbcType="BIGINT"/>
+        <result property="orderNum" column="order_num" jdbcType="INTEGER"/>
+        <result property="path" column="path" jdbcType="VARCHAR"/>
+        <result property="component" column="component" jdbcType="VARCHAR"/>
+        <result property="query" column="query" jdbcType="VARCHAR"/>
+        <result property="menuType" column="menu_type" jdbcType="VARCHAR"/>
+        <result property="visible" column="visible" jdbcType="TINYINT"/>
+        <result property="status" column="status" jdbcType="TINYINT"/>
+        <result property="perms" column="perms" jdbcType="VARCHAR"/>
+        <result property="icon" column="icon" jdbcType="VARCHAR"/>
+        <result property="remark" column="remark" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="creater" column="creater" jdbcType="BIGINT"/>
+        <result property="updater" column="updater" jdbcType="BIGINT"/>
+        <result property="isDelete" column="is_delete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,menu_name,parent_id,
+        order_num,path,component,
+        `query`,menu_type,visible,
+        status,perms,icon,
+        remark,create_time,update_time,
+        creater,updater,is_delete
+    </sql>
+
+    <select id="selectMenusByRoleIds" resultMap="BaseResultMap">
+        SELECT DISTINCT m.*
+        FROM menu m
+        INNER JOIN role_menu rm ON m.id = rm.menu_id
+        WHERE rm.role_id IN
+        <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+            #{roleId}
+        </foreach>
+        AND m.is_delete = 0
+        ORDER BY m.order_num ASC
+    </select>
+</mapper>

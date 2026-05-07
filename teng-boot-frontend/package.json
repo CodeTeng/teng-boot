@@ -1,0 +1,17 @@
+{
+  "name": "teng-boot-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @teng-boot/admin-frontend dev",
+    "dev:admin": "pnpm --filter @teng-boot/admin-frontend dev",
+    "dev:user": "pnpm --filter @teng-boot/user-frontend dev",
+    "build": "pnpm --filter @teng-boot/shared build && pnpm -r --filter !@teng-boot/shared build",
+    "lint": "eslint 'packages/*/src/**/*.{ts,vue}' --fix",
+    "preview": "pnpm --filter @teng-boot/admin-frontend preview"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
