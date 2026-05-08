@@ -33,7 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -59,7 +58,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         CaptchaVO captchaVO = new CaptchaVO();
         captchaVO.setCaptchaType("blockPuzzle");
         captchaVO.setCaptchaVerification(userLoginDTO.getCaptchaVerification());
-        ResponseModel captchaResponse = captchaService.check(captchaVO);
+        ResponseModel captchaResponse = captchaService.verification(captchaVO);
         if (!captchaResponse.isSuccess()) {
             log.info("滑块验证码校验失败，验证码数据：{}", userLoginDTO.getCaptchaVerification());
             throw new BusinessException(ErrorCode.INVALID_VERIFY_CODE, "验证码校验失败");

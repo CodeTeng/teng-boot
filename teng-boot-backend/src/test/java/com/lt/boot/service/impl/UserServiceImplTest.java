@@ -4,11 +4,9 @@ import com.anji.captcha.model.common.ResponseModel;
 import com.anji.captcha.model.vo.CaptchaVO;
 import com.anji.captcha.service.CaptchaService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.lt.boot.constant.UserConstant;
 import com.lt.boot.mapper.UserRoleMapper;
 import com.lt.boot.model.dto.user.UserLoginDTO;
 import com.lt.boot.model.dto.user.UserRegisterDTO;
-import com.lt.boot.model.dto.user.UserUpdateMyPwdDTO;
 import com.lt.boot.model.dto.user.UserUpdatePwdDTO;
 import com.lt.boot.model.entity.User;
 import com.lt.boot.model.entity.UserRole;
@@ -178,7 +176,7 @@ class UserServiceImplTest {
         // Mock AJ-Captcha 验证码校验成功
         ResponseModel mockCaptchaResponse = mock(ResponseModel.class);
         when(mockCaptchaResponse.isSuccess()).thenReturn(true);
-        when(captchaService.check(any(CaptchaVO.class))).thenReturn(mockCaptchaResponse);
+        when(captchaService.verification(any(CaptchaVO.class))).thenReturn(mockCaptchaResponse);
 
         // 执行登录
         UserLoginDTO loginDTO = new UserLoginDTO();
@@ -197,7 +195,7 @@ class UserServiceImplTest {
         // Mock AJ-Captcha 验证码校验成功
         ResponseModel mockCaptchaResponse = mock(ResponseModel.class);
         when(mockCaptchaResponse.isSuccess()).thenReturn(true);
-        when(captchaService.check(any(CaptchaVO.class))).thenReturn(mockCaptchaResponse);
+        when(captchaService.verification(any(CaptchaVO.class))).thenReturn(mockCaptchaResponse);
 
         UserLoginDTO loginDTO = new UserLoginDTO();
         loginDTO.setUsername("nonexistent_user");

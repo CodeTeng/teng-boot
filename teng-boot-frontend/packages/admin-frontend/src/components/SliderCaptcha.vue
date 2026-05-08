@@ -93,7 +93,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { getCaptcha, checkCaptcha, buildCaptchaVerification } from '@teng-boot/shared'
+import { getCaptcha, checkCaptcha, buildCaptchaVerification, buildPointJson } from '@teng-boot/shared'
 import type { CaptchaData } from '@teng-boot/shared'
 
 const emit = defineEmits<{
@@ -101,8 +101,7 @@ const emit = defineEmits<{
   (e: 'fail'): void
 }>()
 
-const PIECE_SIZE = 50
-const PIECE_Y = 55
+const PIECE_SIZE = 47
 const BTN_SIZE = 36
 const RESET_DELAY_MS = 800
 
@@ -144,10 +143,10 @@ const jigsawImageSrc = computed(() => {
 
 // 拼图碎片样式
 const pieceStyle = computed(() => ({
-  top: `${PIECE_Y}px`,
-  left: `${pieceOffset}px`,
+  top: '0px',
+  left: `${pieceOffset.value}px`,
   width: `${PIECE_SIZE}px`,
-  height: `${PIECE_SIZE}px`,
+  height: '155px',
   backgroundImage: `url(${jigsawImageSrc.value})`,
   backgroundSize: '100% 100%',
   backgroundRepeat: 'no-repeat',
@@ -248,10 +247,15 @@ async function onDragEnd() {
 
   verifying.value = true
   try {
-    const encrypted = await buildCaptchaVerification(offset, captchaData.value.secretKey)
-    const res = await checkCaptcha({ captchaType: 'blockPuzzle', captchaVerification: encrypted })
+    const pointJson = await buildPointJson(offset, captchaData.value.secretKey)
+    const res = await checkCaptcha({ 
+      captchaType: 'blockPuzzle', 
+      pointJson, 
+      token: captchaData.value.token 
+    })
     if (res.code === 200 && res.data === true) {
       verified.value = true
+      const encrypted = await buildCaptchaVerification(offset, captchaData.value.secretKey, captchaData.value.token)
       emit('success', encrypted)
     } else {
       handleVerifyFail('验证失败，请重试')
@@ -388,24 +392,16 @@ onUnmounted(() => {
   &__piece {
     position: absolute;
     pointer-events: none;
-    border-radius: 3px;
-    box-shadow:
-      0 0 0 2px rgba(255, 255, 255, 0.9),
-      0 4px 12px rgba(0, 0, 0, 0.25);
     z-index: 2;
 
     &--verified {
-      box-shadow:
-        0 0 0 2px rgba(103, 194, 58, 0.8),
-        0 4px 12px rgba(103, 194, 58, 0.3);
+      filter: brightness(1.2) sepia(0.2) hue-rotate(90deg) saturate(3);
       opacity: 0;
       transition: opacity 0.3s ease;
     }
 
     &--snapping {
-      box-shadow:
-        0 0 0 2px rgba(245, 108, 108, 0.8),
-        0 4px 12px rgba(245, 108, 108, 0.3);
+      filter: brightness(0.8) sepia(1) hue-rotate(-50deg) saturate(5);
     }
   }
 

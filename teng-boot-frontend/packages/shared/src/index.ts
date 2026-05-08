@@ -2,7 +2,7 @@
 export { get, post, put, del } from './api/request'
 
 // API 函数
-export { getCaptcha, checkCaptcha, buildCaptchaVerification } from './api/captcha'
+export { getCaptcha, checkCaptcha, buildCaptchaVerification, buildPointJson } from './api/captcha'
 export { login, register, getCurrentUser, updateMyUser, updateMyPwd, listUserByPage, addUser, updateUser, deleteUser, updateUserPwd, exportUser } from './api/user'
 export type { UserQuery } from './api/user'
 export { listFileByPage, deleteFile } from './api/file'

@@ -12,7 +12,6 @@ import com.lt.boot.model.dto.menu.MenuUpdateDTO;
 import com.lt.boot.model.entity.Menu;
 import com.lt.boot.model.vo.menu.MenuVO;
 import com.lt.boot.service.MenuService;
-import com.lt.boot.utils.UserThreadLocalUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;

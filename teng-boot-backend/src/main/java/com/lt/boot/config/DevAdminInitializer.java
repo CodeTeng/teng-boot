@@ -1,11 +1,5 @@
 package com.lt.boot.config;
 
-import com.lt.boot.mapper.RoleMapper;
-import com.lt.boot.mapper.UserMapper;
-import com.lt.boot.mapper.UserRoleMapper;
-import com.lt.boot.model.entity.Role;
-import com.lt.boot.model.entity.User;
-import com.lt.boot.model.entity.UserRole;
 import com.lt.boot.service.RbacService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;

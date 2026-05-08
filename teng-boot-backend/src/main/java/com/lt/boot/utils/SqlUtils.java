@@ -14,6 +14,6 @@ public class SqlUtils {
         if (StringUtils.isBlank(sortField)) {
             return false;
         }
-        return !StringUtils.containsAny(sortField, "=", "(", ")", " ");
+        return !StringUtils.containsAny(sortField, '=', '(', ')', ' ');
     }
 }

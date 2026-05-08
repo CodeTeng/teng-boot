@@ -29,8 +29,7 @@ public class LoginInterceptor implements HandlerInterceptor {
             "/api/users/findPassword", "/api/druid/index.html", "/api/captcha",
             "/api/captcha/get", "/api/captcha/check",
             "/api/swagger-ui.html", "/api/swagger-resources", "/api/webjars", "/api/doc.html",
-            "/api/v3/api-docs", "/api/v3/api-docs/swagger-config", "/api/v3/api-docs/default"
-    );
+            "/api/v3/api-docs", "/api/v3/api-docs/swagger-config", "/api/v3/api-docs/default"));
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
@@ -73,7 +72,8 @@ public class LoginInterceptor implements HandlerInterceptor {
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
+            throws Exception {
         UserThreadLocalUtils.clear();
     }
 }

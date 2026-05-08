@@ -34,3 +34,5 @@ teng-boot-frontend/.env.*.local
 *.key
 application-dev.yml
 teng-boot-backend/.claude/settings.local.json
+
+temp/

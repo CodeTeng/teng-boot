@@ -7,7 +7,6 @@ import lombok.EqualsAndHashCode;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import java.io.Serializable;
 
 /**
  * @description:
@@ -17,7 +16,7 @@ import java.io.Serializable;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Schema(description = "用户个人修改密码请求体")
-public class UserUpdateMyPwdDTO extends UserUpdatePwdDTO implements Serializable {
+public class UserUpdateMyPwdDTO extends UserUpdatePwdDTO {
     @Schema(description = "用户原始密码", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "用户密码不能为空")
     @Pattern(regexp = RegexConstants.PASSWORD_PATTERN, message = "密码为6~32位的字母、数字、下划线")
