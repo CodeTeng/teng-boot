@@ -31,4 +31,13 @@ public class RoleVO implements Serializable {
 
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
+
+    @Schema(description = "更新时间")
+    private LocalDateTime updateTime;
+
+    @Schema(description = "创建者ID")
+    private Long creater;
+
+    @Schema(description = "更新者ID")
+    private Long updater;
 }

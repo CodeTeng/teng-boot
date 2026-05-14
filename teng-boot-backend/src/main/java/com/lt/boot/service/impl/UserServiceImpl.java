@@ -3,6 +3,7 @@ package com.lt.boot.service.impl;
 import com.anji.captcha.model.common.ResponseModel;
 import com.anji.captcha.model.vo.CaptchaVO;
 import com.anji.captcha.service.CaptchaService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -13,11 +14,13 @@ import com.lt.boot.exception.BusinessException;
 import com.lt.boot.exception.ThrowUtils;
 import com.lt.boot.mapper.UserMapper;
 import com.lt.boot.model.dto.user.*;
+import com.lt.boot.model.entity.Role;
 import com.lt.boot.model.entity.User;
 import com.lt.boot.model.enums.user.UserGenderEnum;
 import com.lt.boot.model.enums.user.UserStatusEnum;
 import com.lt.boot.model.vo.user.UserVO;
 import com.lt.boot.service.RbacService;
+import com.lt.boot.service.RoleService;
 import com.lt.boot.service.UserService;
 import com.lt.boot.utils.*;
 import jakarta.annotation.Resource;
@@ -35,6 +38,7 @@ import org.springframework.util.DigestUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -49,6 +53,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     private RedissonClient redissonClient;
     @Resource
     private RbacService rbacService;
+    @Resource
+    private RoleService roleService;
     @Resource(name = "captchaService")
     private CaptchaService captchaService;
 
@@ -190,6 +196,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
+    @Transactional
     public void updateUser(UserUpdateDTO userUpdateDTO) {
         Long count = lambdaQuery()
                 .ne(User::getId, userUpdateDTO.getId())
@@ -202,40 +209,103 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         BeanUtils.copyProperties(userUpdateDTO, user);
         boolean result = updateById(user);
         if (!result) throw new BusinessException(ErrorCode.DB_UPDATE_EXCEPTION);
+
+        // 如果用户被禁用，将用户加入 Redis 黑名单
+        if (userUpdateDTO.getStatus() != null
+                && userUpdateDTO.getStatus() == UserStatusEnum.DISABLED) {
+            stringRedisTemplate.opsForValue().set(
+                    "token:ban:" + userUpdateDTO.getId(),
+                    String.valueOf(System.currentTimeMillis()),
+                    2, TimeUnit.HOURS
+            );
+        }
     }
 
     @Override
-    public PageVO<User> listUserByPage(UserQuery userQuery) {
-        Long id = userQuery.getId();
-        String username = userQuery.getUsername();
-        String userPhone = userQuery.getUserPhone();
-        String userRealName = userQuery.getUserRealName();
-        UserGenderEnum userGender = userQuery.getUserGender();
-        Integer userAge = userQuery.getUserAge();
-        String userEmail = userQuery.getUserEmail();
-        String userProfile = userQuery.getUserProfile();
-        UserStatusEnum status = userQuery.getStatus();
-        String sortBy = userQuery.getSortBy();
-        Boolean isAsc = userQuery.getIsAsc();
-        Page<User> page = lambdaQuery()
-                .eq(id != null, User::getId, id)
-                .eq(userGender != null, User::getUserGender, userGender)
-                .eq(userAge != null, User::getUserAge, userAge)
-                .eq(status != null, User::getStatus, status)
-                .like(StringUtils.isNotBlank(username), User::getUsername, username)
-                .like(StringUtils.isNotBlank(userPhone), User::getUserPhone, userPhone)
-                .like(StringUtils.isNotBlank(userRealName), User::getUserRealName, userRealName)
-                .like(StringUtils.isNotBlank(userEmail), User::getUserEmail, userEmail)
-                .like(StringUtils.isNotBlank(userProfile), User::getUserProfile, userProfile)
-                .page(userQuery.toMpPageDefaultSortByCreateTimeDesc());
+    public PageVO<UserVO> listUserByPage(UserQuery query) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(query.getId() != null, User::getId, query.getId());
+        wrapper.like(StringUtils.isNotBlank(query.getUsername()), User::getUsername, query.getUsername());
+        wrapper.like(StringUtils.isNotBlank(query.getUserPhone()), User::getUserPhone, query.getUserPhone());
+        wrapper.like(StringUtils.isNotBlank(query.getUserRealName()), User::getUserRealName, query.getUserRealName());
+        wrapper.like(StringUtils.isNotBlank(query.getUserEmail()), User::getUserEmail, query.getUserEmail());
+        wrapper.like(StringUtils.isNotBlank(query.getUserProfile()), User::getUserProfile, query.getUserProfile());
+        wrapper.eq(query.getUserAge() != null, User::getUserAge, query.getUserAge());
+        wrapper.eq(query.getStatus() != null, User::getStatus, query.getStatus());
+        wrapper.eq(StringUtils.isNotBlank(query.getUserRole()), User::getUserRole, query.getUserRole());
+        wrapper.eq(query.getUserGender() != null, User::getUserGender, query.getUserGender());
+
+        // 排序
+        Page<User> page = query.toMpPageDefaultSortByCreateTimeDesc();
+        String sortBy = query.getSortBy();
         if (SqlUtils.validSortField(sortBy)) {
-            page.addOrder(new OrderItem().setColumn(sortBy).setAsc(isAsc));
+            page.addOrder(new OrderItem().setColumn(sortBy).setAsc(query.getIsAsc()));
         }
-        List<User> userList = page.getRecords();
+
+        Page<User> result = page(page, wrapper);
+
+        // 转换为 UserVO，填充 RBAC 角色名称
+        List<UserVO> voList = result.getRecords().stream().map(user -> {
+            UserVO vo = new UserVO();
+            BeanUtils.copyProperties(user, vo);
+            // 填充 RBAC 角色名称
+            try {
+                List<String> roleKeys = rbacService.getUserRoleKeys(user.getId());
+                if (!roleKeys.isEmpty()) {
+                    String roleKey = roleKeys.get(0);
+                    Role role = roleService.getOne(
+                            new LambdaQueryWrapper<Role>().eq(Role::getRoleKey, roleKey)
+                    );
+                    if (role != null) {
+                        vo.setRoleName(role.getRoleName());
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("获取用户 {} 的RBAC角色失败: {}", user.getId(), e.getMessage());
+            }
+            // 如果 RBAC 没找到角色，回退到 userRole 字段
+            if (vo.getRoleName() == null) {
+                vo.setRoleName(vo.getUserRole());
+            }
+            return vo;
+        }).collect(Collectors.toList());
+
+        PageVO<UserVO> pageVO = new PageVO<>();
+        pageVO.setTotal(result.getTotal());
+        pageVO.setPages(result.getPages());
+        pageVO.setList(voList);
+        return pageVO;
+    }
+
+    /**
+     * 分页查询用户原始数据（用于导出等场景）
+     */
+    @Override
+    public PageVO<User> listUserByPageRaw(UserQuery query) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(query.getId() != null, User::getId, query.getId());
+        wrapper.like(StringUtils.isNotBlank(query.getUsername()), User::getUsername, query.getUsername());
+        wrapper.like(StringUtils.isNotBlank(query.getUserPhone()), User::getUserPhone, query.getUserPhone());
+        wrapper.like(StringUtils.isNotBlank(query.getUserRealName()), User::getUserRealName, query.getUserRealName());
+        wrapper.like(StringUtils.isNotBlank(query.getUserEmail()), User::getUserEmail, query.getUserEmail());
+        wrapper.like(StringUtils.isNotBlank(query.getUserProfile()), User::getUserProfile, query.getUserProfile());
+        wrapper.eq(query.getUserAge() != null, User::getUserAge, query.getUserAge());
+        wrapper.eq(query.getStatus() != null, User::getStatus, query.getStatus());
+        wrapper.eq(StringUtils.isNotBlank(query.getUserRole()), User::getUserRole, query.getUserRole());
+        wrapper.eq(query.getUserGender() != null, User::getUserGender, query.getUserGender());
+
+        Page<User> page = query.toMpPageDefaultSortByCreateTimeDesc();
+        String sortBy = query.getSortBy();
+        if (SqlUtils.validSortField(sortBy)) {
+            page.addOrder(new OrderItem().setColumn(sortBy).setAsc(query.getIsAsc()));
+        }
+
+        Page<User> result = page(page, wrapper);
+        List<User> userList = result.getRecords();
         if (CollUtils.isEmpty(userList)) {
-            return PageVO.empty(page);
+            return PageVO.empty(result);
         }
-        return PageVO.of(page, userList);
+        return PageVO.of(result, userList);
     }
 
     @Override

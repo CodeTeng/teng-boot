@@ -1,7 +1,7 @@
 <template>
   <div class="sidebar">
     <!-- Logo -->
-    <div class="sidebar__logo">
+    <div class="sidebar__logo" :class="{ 'sidebar__logo--collapsed': appStore.sidebarCollapsed }">
       <div class="sidebar__logo-icon">
         <el-icon :size="28"><Monitor /></el-icon>
       </div>
@@ -70,17 +70,24 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  background-color: var(--sidebar-bg);
   user-select: none;
 
   &__logo {
     height: 56px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    padding: 0 20px;
     gap: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid var(--sidebar-border);
     flex-shrink: 0;
     overflow: hidden;
+
+    &--collapsed {
+      justify-content: center;
+      padding: 0;
+    }
   }
 
   &__logo-icon {
@@ -91,35 +98,92 @@ onMounted(async () => {
   }
 
   &__logo-text {
-    font-family: 'DM Serif Display', serif;
+    font-family: 'DM Serif Display', 'PingFang SC', 'Microsoft YaHei', sans-serif;
     font-size: 18px;
-    color: #e2e8f0;
+    color: var(--text-primary);
     white-space: nowrap;
+    letter-spacing: -0.3px;
   }
 
   &__menu {
     flex: 1;
-    border-right: none;
-    padding: 8px;
+    border-right: none !important;
+    padding: 12px 8px;
     overflow-y: auto;
 
-    .el-menu-item,
-    .el-sub-menu__title {
-      border-radius: 8px;
-      margin: 2px 0;
-      color: #94a3b8;
+    // 菜单项 & 子菜单标题共同样式
+    :deep(.el-menu-item),
+    :deep(.el-sub-menu__title) {
+      height: 44px;
+      line-height: 44px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+      padding: 0 12px !important;
+      color: var(--sidebar-text-secondary);
+      font-size: 14px;
       transition: all 0.2s ease;
 
       &:hover {
-        background-color: rgba(255, 255, 255, 0.06);
-        color: #e2e8f0;
+        background-color: var(--sidebar-hover-bg) !important;
+        color: var(--sidebar-active-text) !important;
       }
     }
 
-    .el-menu-item {
-      &.is-active {
+    // 菜单项选中状态
+    :deep(.el-menu-item.is-active) {
+      background-color: var(--sidebar-active-bg) !important;
+      color: var(--sidebar-active-text) !important;
+      font-weight: 500;
+      position: relative;
+
+      // 左侧指示器
+      &::before {
+        content: '';
+        position: absolute;
+        left: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 20px;
         background-color: var(--el-color-primary);
-        color: #fff;
+        border-radius: 0 2px 2px 0;
+      }
+    }
+
+    // 子菜单展开时父级标题高亮
+    :deep(.el-sub-menu.is-opened > .el-sub-menu__title) {
+      color: var(--sidebar-active-text) !important;
+    }
+
+    // ========== 折叠状态 ==========
+    &.el-menu--collapse {
+      padding: 12px 8px;
+
+      :deep(.el-menu-item),
+      :deep(.el-sub-menu__title) {
+        justify-content: center;
+        padding: 0 !important;
+
+        // 隐藏文字
+        > span {
+          display: none;
+        }
+
+        // 图标居中，去掉右侧 margin
+        > .el-icon,
+        > .el-sub-menu__icon-arrow {
+          margin-right: 0 !important;
+          margin-left: 0 !important;
+        }
+      }
+
+      // 折叠时隐藏左侧指示器和圆角
+      :deep(.el-menu-item.is-active) {
+        border-radius: 6px;
+
+        &::before {
+          display: none;
+        }
       }
     }
   }

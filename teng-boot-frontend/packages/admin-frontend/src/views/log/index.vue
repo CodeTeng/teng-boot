@@ -25,10 +25,25 @@
             style="width: 140px"
           >
             <el-option label="全部" value="" />
-            <el-option label="新增" value="ADD" />
-            <el-option label="修改" value="UPDATE" />
-            <el-option label="删除" value="DELETE" />
-            <el-option label="查询" value="GET" />
+            <el-option label="POST" value="POST" />
+            <el-option label="PUT" value="PUT" />
+            <el-option label="DELETE" value="DELETE" />
+            <el-option label="GET" value="GET" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="操作系统">
+          <el-select
+            v-model="queryParams.os"
+            placeholder="请选择"
+            clearable
+            style="width: 130px"
+          >
+            <el-option label="全部" value="" />
+            <el-option label="Windows" value="Windows" />
+            <el-option label="macOS" value="macOS" />
+            <el-option label="Linux" value="Linux" />
+            <el-option label="Android" value="Android" />
+            <el-option label="iOS" value="iOS" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -73,6 +88,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="ip" label="IP 地址" width="150" />
+        <el-table-column prop="os" label="操作系统" width="110" />
         <el-table-column prop="createTime" label="操作时间" width="180" />
       </el-table>
 
@@ -107,13 +123,14 @@ const queryParams = reactive({
   pageSize: 10,
   username: undefined as string | undefined,
   operation: undefined as string | undefined,
+  os: undefined as string | undefined,
 })
 
 /** 操作类型对应的 tag 颜色 */
 function operationTagType(operation: string): string {
   const map: Record<string, string> = {
-    ADD: 'success',
-    UPDATE: 'warning',
+    POST: 'success',
+    PUT: 'warning',
     DELETE: 'danger',
     GET: 'info',
   }
@@ -123,8 +140,8 @@ function operationTagType(operation: string): string {
 /** 操作类型显示文本 */
 function operationLabel(operation: string): string {
   const map: Record<string, string> = {
-    ADD: '新增',
-    UPDATE: '修改',
+    POST: '新增',
+    PUT: '修改',
     DELETE: '删除',
     GET: '查询',
   }
@@ -139,6 +156,7 @@ async function loadLogList() {
       pageSize: queryParams.pageSize,
       username: queryParams.username || undefined,
       operation: queryParams.operation || undefined,
+      os: queryParams.os || undefined,
     })
     if (res.code === 200) {
       logList.value = res.data.list
@@ -159,6 +177,7 @@ function handleSearch() {
 function handleReset() {
   queryParams.username = undefined
   queryParams.operation = undefined
+  queryParams.os = undefined
   queryParams.pageNo = 1
   loadLogList()
 }

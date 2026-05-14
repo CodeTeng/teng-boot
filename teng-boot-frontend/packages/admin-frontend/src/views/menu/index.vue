@@ -65,7 +65,7 @@
         <el-table-column label="状态" width="80" align="center">
           <template #default="{ row }">
             <el-switch
-              :model-value="row.status === 0"
+              :model-value="row.status === 1"
               :loading="(row as Record<string, unknown>)._statusLoading as boolean"
               @change="(val: boolean) => handleStatusChange(row, val)"
             />
@@ -199,8 +199,8 @@
         <el-form-item label="状态" prop="status">
           <el-switch
             v-model="formData.status"
-            :active-value="0"
-            :inactive-value="1"
+            :active-value="1"
+            :inactive-value="0"
             active-text="正常"
             inactive-text="停用"
           />
@@ -312,7 +312,7 @@ const createDefaultForm = (): MenuForm => ({
   path: '',
   component: '',
   perms: '',
-  status: 0,
+  status: 1,
 })
 
 const formData: MenuForm = reactive(createDefaultForm())
@@ -488,7 +488,7 @@ function handleDelete(row: MenuVO) {
 
 // ==================== 状态切换 ====================
 async function handleStatusChange(row: MenuVO, newStatus: boolean) {
-  const targetStatus = newStatus ? 0 : 1
+  const targetStatus = newStatus ? 1 : 0
   const rowExt = row as MenuVO & { _statusLoading: boolean }
   rowExt._statusLoading = true
   try {
@@ -507,7 +507,7 @@ async function handleStatusChange(row: MenuVO, newStatus: boolean) {
     const res = await updateMenu(payload)
     if (res.code === 200) {
       row.status = targetStatus
-      ElMessage.success(targetStatus === 0 ? '已启用' : '已停用')
+      ElMessage.success(targetStatus === 1 ? '已启用' : '已停用')
     }
   } catch {
     // 响应拦截器已处理错误

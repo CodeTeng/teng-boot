@@ -71,6 +71,12 @@ export const asyncRoutes: RouteRecordRaw[] = [
         component: () => import('@/views/log/index.vue'),
         meta: { title: '操作日志', icon: 'Document' },
       },
+      {
+        path: 'profile',
+        name: 'Profile',
+        component: () => import('@/views/profile/index.vue'),
+        meta: { title: '个人中心', icon: 'User' },
+      },
     ],
   },
   // 通配符路由放在最后

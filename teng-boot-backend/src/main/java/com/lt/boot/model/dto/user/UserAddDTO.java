@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -32,6 +33,7 @@ public class UserAddDTO implements Serializable {
     @NotBlank(message = "角色名不能为空")
     private String userRole;
     @Schema(description = "用户手机号")
+    @NotBlank(message = "手机号不能为空")
     @Pattern(regexp = RegexConstants.PHONE_PATTERN, message = "请填写正确的手机号")
     private String userPhone;
     @Schema(description = "用户真实姓名")
@@ -44,7 +46,8 @@ public class UserAddDTO implements Serializable {
     @Max(value = 120L, message = "请填写正确的年龄")
     private Integer userAge;
     @Schema(description = "用户邮箱")
-    @Pattern(regexp = RegexConstants.EMAIL_PATTERN, message = "请填写正确的邮箱格式")
+    @NotBlank(message = "邮箱不能为空")
+    @Email(message = "请填写正确的邮箱格式")
     private String userEmail;
     @Schema(description = "用户头像")
     private String userAvatar;

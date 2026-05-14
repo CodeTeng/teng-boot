@@ -2,7 +2,6 @@ package com.lt.boot.model.dto.user;
 
 
 import com.lt.boot.common.page.PageQuery;
-import com.lt.boot.model.enums.user.UserGenderEnum;
 import com.lt.boot.model.enums.user.UserStatusEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -26,7 +25,7 @@ public class UserQuery extends PageQuery implements Serializable {
     @Schema(description = "用户真实姓名")
     private String userRealName;
     @Schema(description = "性别：0-男性，1-女性")
-    private UserGenderEnum userGender;
+    private Integer userGender;
     @Schema(description = "用户年龄")
     private Integer userAge;
     @Schema(description = "用户邮箱")

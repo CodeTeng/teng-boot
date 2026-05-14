@@ -34,7 +34,7 @@ public class SysLog implements Serializable {
     private String username;
     @Schema(description = "用户操作描述")
     private String value;
-    @Schema(description = "用户操作:DELETE ADD GET UPDATE")
+    @Schema(description = "请求方式:GET POST PUT DELETE")
     private String operation;
     @Schema(description = "响应时间,单位毫秒")
     private Long costTime;
@@ -46,6 +46,8 @@ public class SysLog implements Serializable {
     private String params;
     @Schema(description = "IP地址")
     private String ip;
+    @Schema(description = "操作系统")
+    private String os;
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
     @Schema(description = "是否删除 0-未删除 1-已删除")

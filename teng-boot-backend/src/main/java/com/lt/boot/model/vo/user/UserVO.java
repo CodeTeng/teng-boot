@@ -40,8 +40,16 @@ public class UserVO implements Serializable {
     private UserStatusEnum status;
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
+    @Schema(description = "更新时间")
+    private LocalDateTime updateTime;
+    @Schema(description = "创建者id")
+    private Long creater;
+    @Schema(description = "更新者id")
+    private Long updater;
     @Schema(description = "用户token")
     private String token;
+    @Schema(description = "RBAC角色名称")
+    private String roleName;
     @Schema(description = "用户角色列表")
     private List<String> roles;
     @Schema(description = "用户权限标识列表")

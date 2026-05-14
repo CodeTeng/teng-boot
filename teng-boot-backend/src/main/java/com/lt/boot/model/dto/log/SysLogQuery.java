@@ -25,7 +25,7 @@ public class SysLogQuery extends PageQuery implements Serializable {
     private String username;
     @Schema(description = "用户操作描述")
     private String value;
-    @Schema(description = "用户操作:DELETE ADD GET UPDATE")
+    @Schema(description = "请求方式:GET POST PUT DELETE")
     private String operation;
     @Schema(description = "请求url")
     private String url;
@@ -33,4 +33,6 @@ public class SysLogQuery extends PageQuery implements Serializable {
     private String methodName;
     @Schema(description = "IP地址")
     private String ip;
+    @Schema(description = "操作系统")
+    private String os;
 }

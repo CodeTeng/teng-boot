@@ -1,7 +1,7 @@
 package com.lt.boot.config;
 
 import com.lt.boot.aop.LoginInterceptor;
-import org.springframework.context.annotation.Bean;
+import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -13,6 +13,10 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
+
+    @Resource
+    private LoginInterceptor loginInterceptor;
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         // 覆盖所有请求
@@ -26,17 +30,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .exposedHeaders("*");
     }
 
-    /**
-     * 登录拦截器
-     */
-    @Bean
-    public LoginInterceptor loginInterceptor() {
-        return new LoginInterceptor();
-    }
-
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(loginInterceptor()) //添加拦截器
+        registry.addInterceptor(loginInterceptor) //添加拦截器
                 .addPathPatterns("/**"); //拦截所有请求
     }
 

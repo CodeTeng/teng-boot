@@ -78,8 +78,7 @@ public class RoleController {
     @LogRecord("删除角色")
     public BaseResponse<Boolean> deleteRole(@PathVariable("id") Long id) {
         ThrowUtils.throwIf(id == null || id <= 0, ErrorCode.PARAMS_ERROR);
-        boolean result = roleService.removeById(id);
-        ThrowUtils.throwIf(!result, ErrorCode.DB_DELETE_EXCEPTION);
+        roleService.deleteRole(id);
         return ResultUtils.success(true);
     }
 

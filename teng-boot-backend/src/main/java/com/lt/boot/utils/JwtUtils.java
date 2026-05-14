@@ -11,8 +11,6 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -48,15 +46,15 @@ public class JwtUtils {
      * @return token
      */
     public static String getToken(Long id) {
-        Map<String, Object> claimMaps = new HashMap<>();
-        claimMaps.put("userId", id);
+        String jti = UUID.randomUUID().toString().replace("-", "");
         long currentTime = System.currentTimeMillis();
         return Jwts.builder()
+                // JWT ID
+                .id(jti)
                 // 签发时间
-                .id(UUID.randomUUID().toString())
                 .issuedAt(new Date(currentTime))
-                // 说明
-                .subject("system")
+                // 用户ID作为主体
+                .subject(String.valueOf(id))
                 // 签发者信息
                 .issuer("muziteng")
                 // 接收用户
@@ -67,8 +65,6 @@ public class JwtUtils {
                 .signWith(generalKey(), Jwts.SIG.HS256)
                 // 过期时间戳
                 .expiration(new Date(currentTime + TOKEN_TIME_OUT * 1000))
-                // 用户有效信息
-                .claims(claimMaps)
                 .compact();
     }
 
@@ -89,6 +85,20 @@ public class JwtUtils {
         try {
             return getJws(token).getPayload();
         } catch (ExpiredJwtException e) {
+            return null;
+        }
+    }
+
+    /**
+     * 获取 token 签发时间
+     *
+     * @param token JWT token
+     * @return 签发时间，解析失败返回 null
+     */
+    public static Date getIssuedAt(String token) {
+        try {
+            return getJws(token).getPayload().getIssuedAt();
+        } catch (Exception e) {
             return null;
         }
     }
@@ -143,8 +153,8 @@ public class JwtUtils {
             // 判断是否过期
             int res = JwtUtils.verifyToken(claimsBody);
             if (res < 1) {
-                Integer id = (Integer) claimsBody.get("userId");
-                System.out.println("token 解析成功，userId = " + id);
+                String subject = claimsBody.getSubject();
+                System.out.println("token 解析成功，userId = " + subject);
             } else {
                 System.out.println("token 已过期");
             }

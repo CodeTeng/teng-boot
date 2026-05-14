@@ -20,6 +20,25 @@
             <el-option label="禁用" :value="0" />
           </el-select>
         </el-form-item>
+        <el-form-item label="性别">
+          <el-select v-model="queryParams.userGender" placeholder="请选择性别" clearable style="width: 120px">
+            <el-option label="男" :value="0" />
+            <el-option label="女" :value="1" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="邮箱">
+          <el-input v-model="queryParams.userEmail" placeholder="请输入邮箱" clearable style="width: 200px" />
+        </el-form-item>
+        <el-form-item label="角色">
+          <el-select v-model="queryParams.userRole" placeholder="请选择角色" clearable style="width: 150px">
+            <el-option
+              v-for="role in roleOptions"
+              :key="role.id"
+              :label="role.roleName"
+              :value="role.roleKey"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon>
@@ -73,18 +92,27 @@
         <el-table-column prop="userRole" label="角色" width="120" align="center">
           <template #default="{ row }">
             <el-tag :type="row.userRole === 'admin' ? 'danger' : 'primary'" size="small" effect="plain">
-              {{ row.userRole === 'admin' ? '管理员' : row.userRole === 'user' ? '普通用户' : row.userRole }}
+              {{ row.roleName || row.userRole }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="userPhone" label="手机号" width="130" align="center" />
+        <el-table-column prop="userRealName" label="真实姓名" min-width="100" show-overflow-tooltip />
         <el-table-column prop="userGender" label="性别" width="70" align="center">
           <template #default="{ row }">
-            <el-tag v-if="row.userGender === 0" size="small" type="primary" effect="plain">M</el-tag>
-            <el-tag v-else-if="row.userGender === 1" size="small" type="warning" effect="plain">F</el-tag>
+            <span v-if="row.userGender === 0">男</span>
+            <span v-else-if="row.userGender === 1">女</span>
             <span v-else>-</span>
           </template>
         </el-table-column>
+        <el-table-column prop="userAge" label="年龄" width="70" align="center" />
+        <el-table-column prop="userEmail" label="邮箱" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="userAvatar" label="头像" width="80" align="center">
+          <template #default="{ row }">
+            <el-avatar :src="row.userAvatar" shape="circle" :size="40" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="userBirthday" label="生日" width="120" align="center" />
         <el-table-column prop="status" label="状态" width="90" align="center">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
@@ -93,8 +121,14 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="180" align="center" />
-        <el-table-column label="操作" width="220" align="center" fixed="right">
+        <el-table-column prop="updateTime" label="更新时间" width="180" align="center" />
+        <el-table-column prop="creater" label="创建人" width="80" align="center" />
+        <el-table-column prop="updater" label="更新人" width="80" align="center" />
+        <el-table-column label="操作" width="320" align="center" fixed="right">
           <template #default="{ row }">
+            <el-button type="primary" link size="small" @click="openDetailDialog(row)">
+              详情
+            </el-button>
             <el-button type="primary" link size="small" @click="openEditDialog(row)">
               编辑
             </el-button>
@@ -196,6 +230,19 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <el-row v-if="dialog.isEdit" :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="状态" prop="status">
+              <el-switch
+                v-model="form.status"
+                :active-value="1"
+                :inactive-value="0"
+                active-text="正常"
+                inactive-text="禁用"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <template #footer>
         <el-button @click="dialog.visible = false">取消</el-button>
@@ -233,6 +280,45 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 用户详情对话框 -->
+    <el-dialog
+      v-model="detailDialog.visible"
+      title="用户详情"
+      width="700px"
+      :close-on-click-modal="false"
+      destroy-on-close
+    >
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="用户名">{{ detailDialog.user?.username }}</el-descriptions-item>
+        <el-descriptions-item label="真实姓名">{{ detailDialog.user?.userRealName || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="角色">{{ detailDialog.user?.roleName || detailDialog.user?.userRole || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="性别">
+          {{ detailDialog.user?.userGender === 0 ? '男' : detailDialog.user?.userGender === 1 ? '女' : '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item label="年龄">{{ detailDialog.user?.userAge ?? '-' }}</el-descriptions-item>
+        <el-descriptions-item label="手机号">{{ detailDialog.user?.userPhone || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="邮箱">{{ detailDialog.user?.userEmail || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="头像">
+          <el-avatar v-if="detailDialog.user?.userAvatar" :src="detailDialog.user.userAvatar" shape="circle" :size="60" />
+          <span v-else>-</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="生日">{{ detailDialog.user?.userBirthday || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="个人简介">{{ detailDialog.user?.userProfile || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="状态">
+          <el-tag :type="detailDialog.user?.status === 1 ? 'success' : 'danger'" size="small">
+            {{ detailDialog.user?.status === 1 ? '正常' : '禁用' }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="创建时间">{{ detailDialog.user?.createTime || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="更新时间">{{ detailDialog.user?.updateTime || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="创建人">{{ detailDialog.user?.creater || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="更新人">{{ detailDialog.user?.updater || '-' }}</el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="detailDialog.visible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -257,6 +343,9 @@ const queryParams = reactive<UserQuery>({
   pageSize: 10,
   username: undefined,
   userPhone: undefined,
+  userGender: undefined,
+  userEmail: undefined,
+  userRole: undefined,
   status: undefined,
 })
 
@@ -272,13 +361,20 @@ const form = reactive<Record<string, unknown>>({
   userAge: undefined,
   userEmail: '',
   userProfile: '',
+  status: 1,
 })
 
 const formRules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   userRole: [{ required: true, message: '请选择角色', trigger: 'change' }],
-  userPhone: [{ pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }],
-  userEmail: [{ type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }],
+  userPhone: [
+    { required: true, message: '请输入手机号', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '请填写正确的手机号', trigger: 'blur' },
+  ],
+  userEmail: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '请填写正确的邮箱格式', trigger: 'blur' },
+  ],
 }
 
 const dialog = reactive({
@@ -286,6 +382,18 @@ const dialog = reactive({
   isEdit: false,
   submitting: false,
 })
+
+// ==================== 详情对话框 ====================
+const detailDialog = reactive<{
+  visible: boolean
+  user: UserInfo | null
+}>({
+  visible: false,
+  user: null,
+})
+
+// 记录编辑前的原始状态，用于判断状态变更
+let editingOriginalStatus = 1
 
 // ==================== 密码对话框 ====================
 const pwdFormRef = ref()
@@ -358,6 +466,9 @@ const handleSearch = () => {
 const handleReset = () => {
   queryParams.username = undefined
   queryParams.userPhone = undefined
+  queryParams.userGender = undefined
+  queryParams.userEmail = undefined
+  queryParams.userRole = undefined
   queryParams.status = undefined
   queryParams.pageNo = 1
   fetchData()
@@ -380,12 +491,14 @@ const openAddDialog = () => {
   form.userAge = undefined
   form.userEmail = ''
   form.userProfile = ''
+  form.status = 1
   dialog.visible = true
 }
 
 // ==================== 编辑 ====================
 const openEditDialog = (row: UserInfo) => {
   dialog.isEdit = true
+  editingOriginalStatus = row.status
   form.id = row.id
   form.username = row.username
   form.userRole = row.userRole
@@ -395,13 +508,33 @@ const openEditDialog = (row: UserInfo) => {
   form.userAge = row.userAge
   form.userEmail = row.userEmail ?? ''
   form.userProfile = row.userProfile ?? ''
+  form.status = row.status
   dialog.visible = true
+}
+
+// ==================== 用户详情 ====================
+const openDetailDialog = (row: UserInfo) => {
+  detailDialog.user = row
+  detailDialog.visible = true
 }
 
 // ==================== 提交表单 ====================
 const submitForm = async () => {
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
+
+  // 如果将状态从正常改为禁用，弹出确认
+  if (dialog.isEdit && editingOriginalStatus === 1 && form.status === 0) {
+    try {
+      await ElMessageBox.confirm('禁用后该用户将被强制下线，确认继续？', '确认操作', {
+        type: 'warning',
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+      })
+    } catch {
+      return
+    }
+  }
 
   dialog.submitting = true
   try {

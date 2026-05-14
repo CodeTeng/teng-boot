@@ -12,6 +12,8 @@ import com.lt.boot.model.dto.menu.MenuUpdateDTO;
 import com.lt.boot.model.entity.Menu;
 import com.lt.boot.model.vo.menu.MenuVO;
 import com.lt.boot.service.MenuService;
+import com.lt.boot.service.RbacService;
+import com.lt.boot.utils.UserThreadLocalUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
@@ -20,6 +22,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 
 @Tag(name = "菜单管理")
@@ -32,6 +35,9 @@ public class MenuController {
     @Resource
     private MenuService menuService;
 
+    @Resource
+    private RbacService rbacService;
+
     @GetMapping("/tree")
     @Operation(summary = "获取完整菜单树（管理端）")
     public BaseResponse<List<MenuVO>> listAllMenuTree() {
@@ -42,10 +48,9 @@ public class MenuController {
     @GetMapping("/user-tree")
     @Operation(summary = "获取当前用户的菜单树")
     public BaseResponse<List<MenuVO>> listMenuTree() {
-        // 从当前用户角色获取菜单
-        List<MenuVO> menuTree;
-        // 简单实现：先返回完整菜单树，后续可以根据用户角色过滤
-        menuTree = menuService.listMenuTree();
+        Long userId = UserThreadLocalUtils.getUserId();
+        List<Long> roleIds = rbacService.getUserRoleIds(userId);
+        List<MenuVO> menuTree = menuService.listMenuTreeByRoleIds(roleIds);
         return ResultUtils.success(menuTree);
     }
 

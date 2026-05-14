@@ -33,6 +33,7 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog>
         String url = sysLogQuery.getUrl();
         String methodName = sysLogQuery.getMethodName();
         String ip = sysLogQuery.getIp();
+        String os = sysLogQuery.getOs();
         Boolean isAsc = sysLogQuery.getIsAsc();
         String sortBy = sysLogQuery.getSortBy();
         Page<SysLog> page = lambdaQuery()
@@ -44,6 +45,7 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog>
                 .like(StringUtils.isNotBlank(url), SysLog::getUrl, url)
                 .like(StringUtils.isNotBlank(methodName), SysLog::getMethodName, methodName)
                 .like(StringUtils.isNotBlank(ip), SysLog::getIp, ip)
+                .eq(StringUtils.isNotBlank(os), SysLog::getOs, os)
                 .page(sysLogQuery.toMpPageDefaultSortByCreateTimeDesc());
         if (SqlUtils.validSortField(sortBy)) {
             page.addOrder(new OrderItem().setColumn(sortBy).setAsc(isAsc));

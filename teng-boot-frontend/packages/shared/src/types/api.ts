@@ -57,7 +57,11 @@ export interface UserInfo {
   userProfile?: string
   status: number
   createTime?: string
+  updateTime?: string
   token?: string
+  roleName?: string
+  creater?: string
+  updater?: string
   roles: string[]
   permissions: string[]
 }
@@ -93,6 +97,7 @@ export interface SysLog {
   methodName: string
   params: string
   ip: string
+  os?: string
   createTime: string
 }
 
@@ -100,6 +105,7 @@ export interface SysLog {
 export interface SysLogQuery extends PageQuery {
   username?: string
   operation?: string
+  os?: string
 }
 
 /** 菜单节点 */

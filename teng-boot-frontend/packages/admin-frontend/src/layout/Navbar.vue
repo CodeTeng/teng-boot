@@ -20,9 +20,10 @@
 
     <!-- 右侧：用户信息 -->
     <div class="navbar__right">
-      <el-tooltip content="全屏" placement="bottom">
-        <el-icon :size="18" class="navbar__action-icon">
-          <FullScreen />
+      <el-tooltip :content="isFullscreen ? '退出全屏' : '全屏'" placement="bottom">
+        <el-icon :size="18" class="navbar__action-icon" @click="toggleFullscreen">
+          <FullScreen v-if="!isFullscreen" />
+          <Aim v-else />
         </el-icon>
       </el-tooltip>
 
@@ -48,8 +49,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useFullscreen } from '@vueuse/core'
 import { useAppStore } from '@/stores/app'
 import { useUserStore } from '@/stores/user'
+
+const { isFullscreen, toggle: toggleFullscreen } = useFullscreen()
 const route = useRoute()
 const router = useRouter()
 const appStore = useAppStore()
@@ -62,6 +66,8 @@ function handleCommand(command: string) {
   if (command === 'logout') {
     userStore.logout()
     router.push('/login')
+  } else if (command === 'profile') {
+    router.push('/profile')
   }
 }
 </script>

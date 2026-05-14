@@ -54,7 +54,15 @@ public interface UserService extends IService<User> {
      * @param userQuery 后台用户分页查询请求体
      * @return 分页结果
      */
-    PageVO<User> listUserByPage(UserQuery userQuery);
+    PageVO<UserVO> listUserByPage(UserQuery userQuery);
+
+    /**
+     * 分页查询用户原始数据（用于导出等场景）
+     *
+     * @param query 后台用户分页查询请求体
+     * @return 分页结果
+     */
+    PageVO<User> listUserByPageRaw(UserQuery query);
 
     /**
      * 前台分页查询用户

@@ -10,6 +10,9 @@ export interface RoleVO {
   status: number
   remark?: string
   createTime?: string
+  updateTime?: string
+  creater?: number
+  updater?: number
 }
 
 /** 新增角色请求体 */

@@ -80,7 +80,11 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="updateTime" label="更新时间" width="180" />
+        <el-table-column prop="creater" label="创建人" width="80" />
+        <el-table-column prop="updater" label="更新人" width="80" />
+        <el-table-column label="操作" width="300" fixed="right">
           <template #default="{ row }">
             <el-button
               type="primary"
@@ -89,6 +93,14 @@
               @click="handleEdit(row)"
             >
               编辑
+            </el-button>
+            <el-button
+              type="primary"
+              link
+              size="small"
+              @click="handleDetail(row)"
+            >
+              详情
             </el-button>
             <el-button
               type="warning"
@@ -120,8 +132,8 @@
           :total="total"
           layout="total, sizes, prev, pager, next, jumper"
           background
-          @current-change="loadRoleList"
-          @size-change="loadRoleList"
+          @current-change="handleCurrentChange"
+          @size-change="handleSizeChange"
         />
       </div>
     </el-card>
@@ -151,13 +163,19 @@
           <el-input-number v-model="formData.roleSort" :min="0" :max="9999" />
         </el-form-item>
         <el-form-item label="状态" prop="status">
-          <el-switch
-            v-model="formData.status"
-            :active-value="1"
-            :inactive-value="0"
-            active-text="正常"
-            inactive-text="停用"
-          />
+          <el-tooltip
+            :content="hasMenus ? '该角色下已分配菜单，无法禁用' : ''"
+            :disabled="!hasMenus"
+          >
+            <el-switch
+              v-model="formData.status"
+              :active-value="1"
+              :inactive-value="0"
+              active-text="正常"
+              inactive-text="停用"
+              :disabled="hasMenus"
+            />
+          </el-tooltip>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
@@ -173,6 +191,34 @@
         <el-button type="primary" :loading="submitting" @click="handleSubmit">
           确认
         </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 详情对话框 -->
+    <el-dialog
+      v-model="detailDialogVisible"
+      title="角色详情"
+      width="600px"
+      destroy-on-close
+      class="role__detail-dialog"
+    >
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="角色名称">{{ detailData.roleName }}</el-descriptions-item>
+        <el-descriptions-item label="角色标识">{{ detailData.roleKey }}</el-descriptions-item>
+        <el-descriptions-item label="排序">{{ detailData.roleSort }}</el-descriptions-item>
+        <el-descriptions-item label="状态">
+          <el-tag :type="detailData.status === 1 ? 'success' : 'danger'" effect="light" round>
+            {{ detailData.status === 1 ? '正常' : '停用' }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="备注" :span="2">{{ detailData.remark || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="创建时间">{{ detailData.createTime || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="更新时间">{{ detailData.updateTime || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="创建人">{{ detailData.creater || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="更新人">{{ detailData.updater || '-' }}</el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="detailDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
 
@@ -270,12 +316,23 @@ function handleReset() {
   loadRoleList()
 }
 
+// ─── 分页 ──────────────────────────────────────────────────
+function handleSizeChange() {
+  queryParams.pageNo = 1
+  loadRoleList()
+}
+
+function handleCurrentChange() {
+  loadRoleList()
+}
+
 // ─── 新增 / 编辑 对话框 ──────────────────────────────────
 const formDialogVisible = ref(false)
 const isEditing = ref(false)
 const editingId = ref<number | null>(null)
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
+const hasMenus = ref(false)
 
 const defaultFormData = (): RoleAddDTO => ({
   roleName: '',
@@ -296,12 +353,13 @@ const formRules = {
 function handleAdd() {
   isEditing.value = false
   editingId.value = null
+  hasMenus.value = false
   resetFormData()
   formDialogVisible.value = true
   nextTick(() => formRef.value?.clearValidate())
 }
 
-function handleEdit(row: RoleVO) {
+async function handleEdit(row: RoleVO) {
   isEditing.value = true
   editingId.value = row.id
   formData.roleName = row.roleName
@@ -309,6 +367,15 @@ function handleEdit(row: RoleVO) {
   formData.roleSort = row.roleSort
   formData.status = row.status
   formData.remark = row.remark ?? ''
+
+  // 检查该角色是否已分配菜单，如有则禁用状态开关
+  try {
+    const menuIdsRes = await getRoleMenuIds(row.id)
+    hasMenus.value = Array.isArray(menuIdsRes.data) && menuIdsRes.data.length > 0
+  } catch {
+    hasMenus.value = false
+  }
+
   formDialogVisible.value = true
   nextTick(() => formRef.value?.clearValidate())
 }
@@ -348,6 +415,21 @@ async function handleDelete(id: number) {
   } catch {
     // 响应拦截器已经处理了错误提示
   }
+}
+
+// ─── 详情对话框 ──────────────────────────────────────────
+const detailDialogVisible = ref(false)
+const detailData = reactive<RoleVO>({
+  id: 0,
+  roleName: '',
+  roleKey: '',
+  roleSort: 0,
+  status: 1,
+})
+
+function handleDetail(row: RoleVO) {
+  Object.assign(detailData, row)
+  detailDialogVisible.value = true
 }
 
 // ─── 分配菜单 ──────────────────────────────────────────────

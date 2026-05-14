@@ -1,5 +1,6 @@
 package com.lt.boot.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.lt.boot.annotation.AuthCheck;
 import com.lt.boot.annotation.LogRecord;
 import com.lt.boot.common.BaseResponse;
@@ -11,9 +12,12 @@ import com.lt.boot.constant.UserConstant;
 import com.lt.boot.exception.BusinessException;
 import com.lt.boot.exception.ThrowUtils;
 import com.lt.boot.model.dto.user.*;
+import com.lt.boot.model.entity.Role;
 import com.lt.boot.model.entity.User;
 import com.lt.boot.model.enums.user.UserStatusEnum;
 import com.lt.boot.model.vo.user.UserVO;
+import com.lt.boot.service.RbacService;
+import com.lt.boot.service.RoleService;
 import com.lt.boot.service.UserService;
 import com.lt.boot.utils.CollUtils;
 import com.lt.boot.utils.ExcelUtils;
@@ -41,6 +45,12 @@ import java.util.List;
 public class UserController {
     @Resource
     private UserService userService;
+
+    @Resource
+    private RbacService rbacService;
+
+    @Resource
+    private RoleService roleService;
 
     @PostMapping("/login")
     @Operation(summary = "用户登录")
@@ -168,21 +178,40 @@ public class UserController {
     @PostMapping("/list/page")
     @Operation(summary = "分页查询用户(后台管理)默认按照创建时间降序，还可以根据用户年龄，用户生日，更新时间排序")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<PageVO<User>> listUserByPage(@RequestBody @Validated UserQuery userQuery) {
+    public BaseResponse<PageVO<UserVO>> listUserByPage(@RequestBody @Validated UserQuery userQuery) {
         ThrowUtils.throwIf(userQuery == null, ErrorCode.PARAMS_ERROR);
-        PageVO<User> page = userService.listUserByPage(userQuery);
-        return ResultUtils.success(page);
+        PageVO<UserVO> pageVO = userService.listUserByPage(userQuery);
+        return ResultUtils.success(pageVO);
     }
 
     @GetMapping("/get/{id}")
     @Operation(summary = "根据id获取用户(后台管理)")
     @Parameter(name = "id", description = "用户id", required = true)
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<User> getUserById(@PathVariable("id") Long id) {
+    public BaseResponse<UserVO> getUserById(@PathVariable("id") Long id) {
         ThrowUtils.throwIf(id == null || id <= 0, ErrorCode.PARAMS_ERROR);
         User user = userService.getById(id);
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR);
-        return ResultUtils.success(user);
+        UserVO vo = new UserVO();
+        BeanUtils.copyProperties(user, vo);
+        // 填充 RBAC 角色名称
+        try {
+            List<String> roleKeys = rbacService.getUserRoleKeys(user.getId());
+            if (!roleKeys.isEmpty()) {
+                Role role = roleService.getOne(
+                        new LambdaQueryWrapper<Role>().eq(Role::getRoleKey, roleKeys.get(0))
+                );
+                if (role != null) {
+                    vo.setRoleName(role.getRoleName());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("获取用户角色失败");
+        }
+        if (vo.getRoleName() == null) {
+            vo.setRoleName(vo.getUserRole());
+        }
+        return ResultUtils.success(vo);
     }
 
     @PostMapping("/export/page")
@@ -191,7 +220,7 @@ public class UserController {
     @LogRecord("用户数据导出(后台管理)")
     public BaseResponse<Boolean> exportUser(@RequestBody @Validated UserQuery userQuery, HttpServletResponse response) throws Exception {
         ThrowUtils.throwIf(userQuery == null, ErrorCode.PARAMS_ERROR);
-        PageVO<User> page = userService.listUserByPage(userQuery);
+        PageVO<User> page = userService.listUserByPageRaw(userQuery);
         List<User> list = page.getList();
         ExcelUtils.doExport(list, User.class, "用户数据", response);
         return ResultUtils.success(true);

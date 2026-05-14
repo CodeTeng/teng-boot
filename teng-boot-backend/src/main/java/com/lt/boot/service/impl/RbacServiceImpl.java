@@ -45,13 +45,10 @@ public class RbacServiceImpl implements RbacService {
 
     @Override
     public List<String> getUserRoleKeys(Long userId) {
-        List<UserRole> userRoles = userRoleMapper.selectList(
-                new LambdaQueryWrapper<UserRole>()
-                        .eq(UserRole::getUserId, userId));
-        if (CollUtils.isEmpty(userRoles)) {
+        List<Long> roleIds = getUserRoleIds(userId);
+        if (CollUtils.isEmpty(roleIds)) {
             return Collections.emptyList();
         }
-        List<Long> roleIds = userRoles.stream().map(UserRole::getRoleId).collect(Collectors.toList());
         List<Role> roles = roleMapper.selectBatchIds(roleIds);
         if (CollUtils.isEmpty(roles)) {
             return Collections.emptyList();
@@ -60,6 +57,17 @@ public class RbacServiceImpl implements RbacService {
                 .filter(r -> r.getStatus() == 1)
                 .map(Role::getRoleKey)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Long> getUserRoleIds(Long userId) {
+        List<UserRole> userRoles = userRoleMapper.selectList(
+                new LambdaQueryWrapper<UserRole>()
+                        .eq(UserRole::getUserId, userId));
+        if (CollUtils.isEmpty(userRoles)) {
+            return Collections.emptyList();
+        }
+        return userRoles.stream().map(UserRole::getRoleId).collect(Collectors.toList());
     }
 
     @Override

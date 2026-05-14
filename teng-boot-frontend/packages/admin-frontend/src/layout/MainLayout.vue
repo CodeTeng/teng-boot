@@ -36,7 +36,7 @@ const appStore = useAppStore()
 
   &__aside {
     background-color: var(--sidebar-bg);
-    border-right: 1px solid var(--border-color);
+    border-right: 1px solid var(--sidebar-border);
     transition: width 0.28s ease;
     overflow: hidden;
     display: flex;

@@ -19,6 +19,14 @@ public interface RbacService {
     List<String> getUserRoleKeys(Long userId);
 
     /**
+     * 获取用户的角色 ID 列表
+     *
+     * @param userId 用户ID
+     * @return 角色 ID 列表
+     */
+    List<Long> getUserRoleIds(Long userId);
+
+    /**
      * 获取用户的权限标识列表
      *
      * @param userId 用户ID

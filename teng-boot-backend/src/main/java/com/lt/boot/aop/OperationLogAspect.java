@@ -71,6 +71,9 @@ public class OperationLogAspect {
         String value = logRecord.value();
         // 当前登录用户
         Long userId = UserThreadLocalUtils.getUserId();
+        // 获取操作系统信息
+        String userAgent = httpServletRequest.getHeader("User-Agent");
+        String os = parseOs(userAgent);
         // 异步保存日志
         CompletableFuture.runAsync(() -> {
             User user = userService.getById(userId);
@@ -84,9 +87,35 @@ public class OperationLogAspect {
             sysLog.setMethodName(methodName);
             sysLog.setParams(reqParam);
             sysLog.setIp(ip);
+            sysLog.setOs(os);
             sysLogService.save(sysLog);
         }, handleSysLogTaskExecutor);
         return result;
+    }
+
+    /**
+     * 从 User-Agent 解析操作系统类型
+     */
+    private String parseOs(String userAgent) {
+        if (StringUtils.isBlank(userAgent)) {
+            return "Unknown";
+        }
+        if (userAgent.contains("Windows") || userAgent.contains("Win")) {
+            return "Windows";
+        }
+        if (userAgent.contains("Mac") || userAgent.contains("macOS")) {
+            return "macOS";
+        }
+        if (userAgent.contains("Linux") && !userAgent.contains("Android")) {
+            return "Linux";
+        }
+        if (userAgent.contains("Android")) {
+            return "Android";
+        }
+        if (userAgent.contains("iPhone") || userAgent.contains("iPad") || userAgent.contains("iOS")) {
+            return "iOS";
+        }
+        return "Unknown";
     }
 }
 

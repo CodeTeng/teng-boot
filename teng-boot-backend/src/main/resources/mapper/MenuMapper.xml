@@ -43,6 +43,8 @@
             #{roleId}
         </foreach>
         AND m.is_delete = 0
+        AND m.status = 1
+        AND m.visible = 1
         ORDER BY m.order_num ASC
     </select>
 </mapper>

@@ -2,6 +2,7 @@ package com.lt.boot.service;
 
 import com.lt.boot.common.page.PageVO;
 import com.lt.boot.model.dto.role.RoleQuery;
+import com.lt.boot.model.dto.role.RoleUpdateDTO;
 import com.lt.boot.model.entity.Role;
 import com.lt.boot.model.vo.role.RoleVO;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -34,4 +35,14 @@ public interface RoleService extends IService<Role> {
      * 获取角色拥有的菜单ID列表
      */
     List<Long> getRoleMenuIds(Long roleId);
+
+    /**
+     * 更新角色
+     */
+    void updateRole(RoleUpdateDTO dto);
+
+    /**
+     * 删除角色（含前置校验：已分配菜单或已关联用户时不可删除）
+     */
+    void deleteRole(Long id);
 }

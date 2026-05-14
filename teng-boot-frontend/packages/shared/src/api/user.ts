@@ -43,6 +43,7 @@ export interface UserQuery {
   userAge?: number
   userEmail?: string
   userProfile?: string
+  userRole?: string
   status?: number
 }
 
