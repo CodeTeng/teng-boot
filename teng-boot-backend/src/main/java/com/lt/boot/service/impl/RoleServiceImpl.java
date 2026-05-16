@@ -9,11 +9,13 @@ import com.lt.boot.common.page.PageVO;
 import com.lt.boot.exception.ThrowUtils;
 import com.lt.boot.mapper.RoleMapper;
 import com.lt.boot.mapper.RoleMenuMapper;
+import com.lt.boot.mapper.UserMapper;
 import com.lt.boot.mapper.UserRoleMapper;
 import com.lt.boot.model.dto.role.RoleQuery;
 import com.lt.boot.model.dto.role.RoleUpdateDTO;
 import com.lt.boot.model.entity.Role;
 import com.lt.boot.model.entity.RoleMenu;
+import com.lt.boot.model.entity.User;
 import com.lt.boot.model.entity.UserRole;
 import com.lt.boot.model.vo.role.RoleVO;
 import com.lt.boot.service.RoleService;
@@ -27,8 +29,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -40,6 +46,9 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role>
 
     @Resource
     private UserRoleMapper userRoleMapper;
+
+    @Resource
+    private UserMapper userMapper;
 
     @Override
     public PageVO<RoleVO> listRoleByPage(RoleQuery query) {
@@ -62,9 +71,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role>
         if (CollUtils.isEmpty(roleList)) {
             return PageVO.empty(page);
         }
-        List<RoleVO> roleVOList = roleList.stream()
-                .map(this::toVO)
-                .collect(Collectors.toList());
+        List<RoleVO> roleVOList = toVOList(roleList);
         return PageVO.of(page, roleVOList);
     }
 
@@ -77,9 +84,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role>
         if (CollUtils.isEmpty(roleList)) {
             return new ArrayList<>();
         }
-        return roleList.stream()
-                .map(this::toVO)
-                .collect(Collectors.toList());
+        return toVOList(roleList);
     }
 
     @Override
@@ -162,6 +167,57 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role>
 
         BeanUtils.copyProperties(dto, role);
         updateById(role);
+    }
+
+    /**
+     * 批量转换 Role 为 RoleVO，填充创建人/更新人用户名
+     */
+    private List<RoleVO> toVOList(List<Role> roleList) {
+        List<RoleVO> voList = new ArrayList<>();
+        // 收集所有创建人和更新人的用户ID
+        Set<Long> userIds = roleList.stream()
+                .flatMap(role -> Stream.of(role.getCreater(), role.getUpdater()))
+                .filter(id -> id != null && id > 0)
+                .collect(Collectors.toSet());
+
+        // 批量查询用户
+        Map<Long, String> userNameMap = new HashMap<>();
+        if (!userIds.isEmpty()) {
+            List<User> users = userMapper.selectBatchIds(userIds);
+            userNameMap = users.stream()
+                    .collect(Collectors.toMap(User::getId, User::getUsername, (v1, v2) -> v1));
+        }
+
+        for (Role role : roleList) {
+            RoleVO vo = new RoleVO();
+            vo.setId(role.getId());
+            vo.setRoleName(role.getRoleName());
+            vo.setRoleKey(role.getRoleKey());
+            vo.setRoleSort(role.getRoleSort());
+            vo.setStatus(role.getStatus());
+            vo.setRemark(role.getRemark());
+            vo.setCreateTime(role.getCreateTime());
+            vo.setUpdateTime(role.getUpdateTime());
+            vo.setCreater(role.getCreater());
+            vo.setUpdater(role.getUpdater());
+
+            // 填充创建人用户名
+            if (role.getCreater() != null && role.getCreater() > 0) {
+                vo.setCreatorName(userNameMap.getOrDefault(role.getCreater(), "-"));
+            } else {
+                vo.setCreatorName("-");
+            }
+
+            // 填充更新人用户名
+            if (role.getUpdater() != null && role.getUpdater() > 0) {
+                vo.setUpdaterName(userNameMap.getOrDefault(role.getUpdater(), "-"));
+            } else {
+                vo.setUpdaterName("-");
+            }
+
+            voList.add(vo);
+        }
+        return voList;
     }
 
     /**

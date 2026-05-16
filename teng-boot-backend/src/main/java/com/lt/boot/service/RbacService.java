@@ -56,4 +56,12 @@ public interface RbacService {
      * @param roleKey  角色 key
      */
     void assignRoleByUsername(String username, String roleKey);
+
+    /**
+     * 根据角色 key 获取所有用户 ID
+     *
+     * @param roleKey 角色 key
+     * @return 拥有该角色的用户 ID 列表
+     */
+    List<Long> getUserIdsByRoleKey(String roleKey);
 }

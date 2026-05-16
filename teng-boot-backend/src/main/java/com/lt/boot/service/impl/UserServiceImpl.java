@@ -15,12 +15,15 @@ import com.lt.boot.exception.ThrowUtils;
 import com.lt.boot.mapper.UserMapper;
 import com.lt.boot.model.dto.user.*;
 import com.lt.boot.model.entity.Role;
+import com.lt.boot.model.entity.SysLog;
 import com.lt.boot.model.entity.User;
+import com.lt.boot.model.enums.log.SysLogTypeEnum;
 import com.lt.boot.model.enums.user.UserGenderEnum;
 import com.lt.boot.model.enums.user.UserStatusEnum;
 import com.lt.boot.model.vo.user.UserVO;
 import com.lt.boot.service.RbacService;
 import com.lt.boot.service.RoleService;
+import com.lt.boot.service.SysLogService;
 import com.lt.boot.service.UserService;
 import com.lt.boot.utils.*;
 import jakarta.annotation.Resource;
@@ -55,6 +58,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     private RbacService rbacService;
     @Resource
     private RoleService roleService;
+    @Resource
+    private SysLogService sysLogService;
     @Resource(name = "captchaService")
     private CaptchaService captchaService;
 
@@ -110,6 +115,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 7. 生成 token
         String token = JwtUtils.getToken(user.getId());
         userVO.setToken(token);
+        // 8. 记录登录日志
+        SysLog loginLog = new SysLog();
+        loginLog.setUserId(user.getId());
+        loginLog.setUsername(username);
+        loginLog.setValue("用户登录");
+        loginLog.setOperation("LOGIN");
+        loginLog.setLogType(SysLogTypeEnum.LOGIN.getCode());
+        sysLogService.save(loginLog);
         return userVO;
     }
 
@@ -232,8 +245,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         wrapper.like(StringUtils.isNotBlank(query.getUserProfile()), User::getUserProfile, query.getUserProfile());
         wrapper.eq(query.getUserAge() != null, User::getUserAge, query.getUserAge());
         wrapper.eq(query.getStatus() != null, User::getStatus, query.getStatus());
-        wrapper.eq(StringUtils.isNotBlank(query.getUserRole()), User::getUserRole, query.getUserRole());
         wrapper.eq(query.getUserGender() != null, User::getUserGender, query.getUserGender());
+
+        // 角色筛选：通过 RBAC user_role 关联表查询
+        if (StringUtils.isNotBlank(query.getUserRole())) {
+            List<Long> userIdsWithRole = rbacService.getUserIdsByRoleKey(query.getUserRole());
+            if (CollUtils.isEmpty(userIdsWithRole)) {
+                // 如果没有用户拥有该角色，直接返回空结果
+                return PageVO.empty(0L, 0L);
+            }
+            wrapper.in(User::getId, userIdsWithRole);
+        }
 
         // 排序
         Page<User> page = query.toMpPageDefaultSortByCreateTimeDesc();
@@ -244,7 +266,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         Page<User> result = page(page, wrapper);
 
-        // 转换为 UserVO，填充 RBAC 角色名称
+        // 转换为 UserVO，填充 RBAC 角色名称和创建人/更新人用户名
         List<UserVO> voList = result.getRecords().stream().map(user -> {
             UserVO vo = new UserVO();
             BeanUtils.copyProperties(user, vo);
@@ -266,6 +288,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             // 如果 RBAC 没找到角色，回退到 userRole 字段
             if (vo.getRoleName() == null) {
                 vo.setRoleName(vo.getUserRole());
+            }
+            // 填充创建人用户名
+            if (user.getCreater() != null) {
+                User creator = getById(user.getCreater());
+                vo.setCreatorName(creator != null ? creator.getUsername() : "-");
+            } else {
+                vo.setCreatorName("-");
+            }
+            // 填充更新人用户名
+            if (user.getUpdater() != null) {
+                User updaterUser = getById(user.getUpdater());
+                vo.setUpdaterName(updaterUser != null ? updaterUser.getUsername() : "-");
+            } else {
+                vo.setUpdaterName("-");
             }
             return vo;
         }).collect(Collectors.toList());
@@ -399,6 +435,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         newUser.setUserPassword(passwordEncoder.encode(newPassword));
         boolean result = updateById(newUser);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+    }
+
+    @Override
+    public void userLogout() {
+        Long userId = UserThreadLocalUtils.getUserId();
+        if (userId != null) {
+            User user = getById(userId);
+            // 记录退出日志
+            SysLog logoutLog = new SysLog();
+            logoutLog.setUserId(userId);
+            logoutLog.setUsername(user != null ? user.getUsername() : "");
+            logoutLog.setValue("用户退出");
+            logoutLog.setOperation("LOGOUT");
+            logoutLog.setLogType(SysLogTypeEnum.LOGOUT.getCode());
+            sysLogService.save(logoutLog);
+        }
     }
 
     private boolean isLegacyMd5(String password) {

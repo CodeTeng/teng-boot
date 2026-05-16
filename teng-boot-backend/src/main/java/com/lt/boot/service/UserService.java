@@ -93,4 +93,9 @@ public interface UserService extends IService<User> {
      * @param userUpdateMyPwdDTO 用户个人修改密码请求体
      */
     void updateUserMyPwd(UserUpdateMyPwdDTO userUpdateMyPwdDTO);
+
+    /**
+     * 用户退出登录
+     */
+    void userLogout();
 }

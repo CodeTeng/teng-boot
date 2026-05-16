@@ -29,6 +29,10 @@ export const updateMyUser = (data: UserUpdateMyDTO) =>
 export const updateMyPwd = (data: UserUpdatePwdDTO) =>
   put<BaseResponse<boolean>>('/users/update/myPwd', data)
 
+/** 退出登录 */
+export const logout = () =>
+  post<BaseResponse<boolean>>('/users/logout')
+
 // ===== 管理端 API（以下为后台管理专用） =====
 
 /** 用户查询参数 */

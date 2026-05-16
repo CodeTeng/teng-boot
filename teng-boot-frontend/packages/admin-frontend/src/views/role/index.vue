@@ -80,10 +80,10 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
         <el-table-column prop="updateTime" label="更新时间" width="180" />
-        <el-table-column prop="creater" label="创建人" width="80" />
-        <el-table-column prop="updater" label="更新人" width="80" />
+        <el-table-column prop="creatorName" label="创建人" width="100" />
+        <el-table-column prop="updaterName" label="更新人" width="100" />
+        <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
         <el-table-column label="操作" width="300" fixed="right">
           <template #default="{ row }">
             <el-button
@@ -134,6 +134,7 @@
           background
           @current-change="handleCurrentChange"
           @size-change="handleSizeChange"
+          :locale="{ total: `共 ${total} 项`, pageLabel: '第', goto: '前往', elevator: '页', pageSuffix: '页' }"
         />
       </div>
     </el-card>
@@ -214,8 +215,8 @@
         <el-descriptions-item label="备注" :span="2">{{ detailData.remark || '-' }}</el-descriptions-item>
         <el-descriptions-item label="创建时间">{{ detailData.createTime || '-' }}</el-descriptions-item>
         <el-descriptions-item label="更新时间">{{ detailData.updateTime || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="创建人">{{ detailData.creater || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="更新人">{{ detailData.updater || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="创建人">{{ detailData.creatorName || detailData.creater || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="更新人">{{ detailData.updaterName || detailData.updater || '-' }}</el-descriptions-item>
       </el-descriptions>
       <template #footer>
         <el-button @click="detailDialogVisible = false">关闭</el-button>
@@ -450,15 +451,46 @@ async function handleAssignMenu(row: RoleVO) {
       getRoleMenuIds(row.id),
     ])
     menuTree.value = treeRes.data
+    const checkedMenuIds = menuIdsRes.data || []
 
     // 等待 DOM 渲染后设置勾选
     nextTick(() => {
       if (menuTreeRef.value) {
-        menuTreeRef.value.setCheckedKeys(menuIdsRes.data)
+        // 先设置叶子节点
+        menuTreeRef.value.setCheckedKeys(checkedMenuIds)
+        // 然后处理父节点：如果某个父节点的所有子节点都被选中，则该父节点也应设为勾选
+        setParentNodesChecked(menuTree.value, checkedMenuIds)
       }
     })
   } catch {
     // 响应拦截器已经处理了错误提示
+  }
+}
+
+/**
+ * 递归设置父节点的勾选状态
+ * 如果某父节点的所有子节点都被选中，则该父节点也应设为勾选状态
+ */
+function setParentNodesChecked(
+  nodes: MenuTreeNode[],
+  checkedIds: number[],
+) {
+  if (!menuTreeRef.value) return
+
+  for (const node of nodes) {
+    if (node.children && node.children.length > 0) {
+      // 检查该节点的所有子节点是否都在 checkedIds 中
+      const childIds = node.children.map((child) => child.id)
+      const allChildrenChecked = childIds.every((id) =>
+        checkedIds.includes(id),
+      )
+      // 如果所有子节点都被选中，则设置父节点为勾选状态
+      if (allChildrenChecked) {
+        menuTreeRef.value.setChecked(node.id, true, false)
+      }
+      // 递归处理子节点
+      setParentNodesChecked(node.children, checkedIds)
+    }
   }
 }
 

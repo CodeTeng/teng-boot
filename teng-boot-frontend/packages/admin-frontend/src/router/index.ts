@@ -92,6 +92,10 @@ const router = createRouter({
   scrollBehavior: () => ({ top: 0 }),
 })
 
+/** 用户信息缓存时间戳 (5分钟刷新一次) */
+const USER_INFO_CACHE_MS = 5 * 60 * 1000
+let lastFetchUserInfoTime = 0
+
 /** 路由守卫：认证 + 用户信息加载 + 角色校验 */
 router.beforeEach(async (to, _from, next) => {
   // 访问登录页
@@ -107,12 +111,15 @@ router.beforeEach(async (to, _from, next) => {
     return next('/login')
   }
 
-  // 如果还没加载用户信息，尝试获取
-  if (!getUserInfo()) {
+  // 如果还没加载用户信息，或者距离上次获取超过5分钟，重新获取用户信息
+  // 这样可以确保权限变更后，用户刷新页面能看到最新的权限
+  const now = Date.now()
+  if (!getUserInfo() || now - lastFetchUserInfoTime > USER_INFO_CACHE_MS) {
     try {
       const res = await getCurrentUser()
       if (res.code === 200 && res.data) {
         setUserInfo(res.data)
+        lastFetchUserInfoTime = now
       } else {
         logout()
         return next('/login')

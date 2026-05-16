@@ -27,10 +27,8 @@ public class JacksonConfig {
     @Bean
     public ObjectMapper jacksonObjectMapper(Jackson2ObjectMapperBuilder builder) {
         ObjectMapper objectMapper = builder.createXmlMapper(false).build();
-        SimpleModule module = new SimpleModule();
-        module.addSerializer(Long.class, ToStringSerializer.instance);
-        module.addSerializer(Long.TYPE, ToStringSerializer.instance);
-        objectMapper.registerModule(module);
+        // 注意：不再全局将 Long 转为 String，避免分页等场景的 total/pages 字段被序列化为字符串
+        // 如需对特定 ID 字段进行 Long 转 String，请在实体字段上使用 @JsonSerialize(using = ToStringSerializer.class)
         return objectMapper;
     }
 

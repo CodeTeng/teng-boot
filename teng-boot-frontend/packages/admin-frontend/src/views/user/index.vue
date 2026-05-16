@@ -122,8 +122,8 @@
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="180" align="center" />
         <el-table-column prop="updateTime" label="更新时间" width="180" align="center" />
-        <el-table-column prop="creater" label="创建人" width="80" align="center" />
-        <el-table-column prop="updater" label="更新人" width="80" align="center" />
+        <el-table-column prop="creatorName" label="创建人" width="80" align="center" />
+        <el-table-column prop="updaterName" label="更新人" width="80" align="center" />
         <el-table-column label="操作" width="320" align="center" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="openDetailDialog(row)">
@@ -148,7 +148,7 @@
           v-model:current-page="queryParams.pageNo"
           v-model:page-size="queryParams.pageSize"
           :page-sizes="[10, 20, 50, 100]"
-          :total="total"
+          :total="Number(total)"
           layout="total, sizes, prev, pager, next, jumper"
           background
           @size-change="fetchData"
@@ -312,8 +312,8 @@
         </el-descriptions-item>
         <el-descriptions-item label="创建时间">{{ detailDialog.user?.createTime || '-' }}</el-descriptions-item>
         <el-descriptions-item label="更新时间">{{ detailDialog.user?.updateTime || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="创建人">{{ detailDialog.user?.creater || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="更新人">{{ detailDialog.user?.updater || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="创建人">{{ detailDialog.user?.creatorName || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="更新人">{{ detailDialog.user?.updaterName || '-' }}</el-descriptions-item>
       </el-descriptions>
       <template #footer>
         <el-button @click="detailDialog.visible = false">关闭</el-button>
@@ -448,7 +448,7 @@ const fetchData = async () => {
     const res = await listUserByPage({ ...queryParams })
     if (res.code === 200) {
       tableData.value = res.data.list
-      total.value = res.data.total
+      total.value = Number(res.data.total) || 0
     }
   } catch {
     // 错误已在拦截器中处理

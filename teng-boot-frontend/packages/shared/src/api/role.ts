@@ -13,6 +13,8 @@ export interface RoleVO {
   updateTime?: string
   creater?: number
   updater?: number
+  creatorName?: string
+  updaterName?: string
 }
 
 /** 新增角色请求体 */

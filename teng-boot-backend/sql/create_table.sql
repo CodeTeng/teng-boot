@@ -25,7 +25,7 @@ CREATE TABLE `user`
     `updater`       bigint        DEFAULT 0                 NULL COMMENT '更新者id',
     `is_delete`     tinyint       DEFAULT 0                 NOT NULL COMMENT '是否删除 0-未删除 1-已删除',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_username` (`username`)
+    UNIQUE INDEX `uk_username` (`username`) USING BTREE WHERE `is_delete` = 0
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT = '用户表';
@@ -46,7 +46,7 @@ CREATE TABLE `role`
     `updater`     bigint      DEFAULT NULL COMMENT '更新者id',
     `is_delete`   tinyint     DEFAULT 0                NOT NULL COMMENT '是否删除 0-未删除 1-已删除',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_role_key` (`role_key`)
+    UNIQUE INDEX `uk_role_key` (`role_key`) USING BTREE WHERE `is_delete` = 0
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT = '角色表';

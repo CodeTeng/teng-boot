@@ -106,6 +106,7 @@ export interface SysLogQuery extends PageQuery {
   username?: string
   operation?: string
   os?: string
+  logType?: number
 }
 
 /** 菜单节点 */

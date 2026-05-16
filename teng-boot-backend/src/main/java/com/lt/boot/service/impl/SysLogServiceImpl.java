@@ -1,5 +1,6 @@
 package com.lt.boot.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -34,10 +35,12 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog>
         String methodName = sysLogQuery.getMethodName();
         String ip = sysLogQuery.getIp();
         String os = sysLogQuery.getOs();
+        Integer logType = sysLogQuery.getLogType();
         Boolean isAsc = sysLogQuery.getIsAsc();
         String sortBy = sysLogQuery.getSortBy();
-        Page<SysLog> page = lambdaQuery()
-                .eq(id != null, SysLog::getId, id)
+
+        LambdaQueryWrapper<SysLog> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(id != null, SysLog::getId, id)
                 .eq(userId != null, SysLog::getUserId, userId)
                 .eq(StringUtils.isNotBlank(operation), SysLog::getOperation, operation)
                 .like(StringUtils.isNotBlank(username), SysLog::getUsername, username)
@@ -45,8 +48,19 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog>
                 .like(StringUtils.isNotBlank(url), SysLog::getUrl, url)
                 .like(StringUtils.isNotBlank(methodName), SysLog::getMethodName, methodName)
                 .like(StringUtils.isNotBlank(ip), SysLog::getIp, ip)
-                .eq(StringUtils.isNotBlank(os), SysLog::getOs, os)
-                .page(sysLogQuery.toMpPageDefaultSortByCreateTimeDesc());
+                .eq(StringUtils.isNotBlank(os), SysLog::getOs, os);
+
+        // 处理日志类型筛选
+        // 注意：如果数据库 sys_log 表没有 log_type 字段，查询会报错
+        // 请先执行 sql/update_sys_log_log_type.sql 脚本添加字段
+        if (logType != null) {
+            // 指定了日志类型（1:操作日志）
+            wrapper.eq(SysLog::getLogType, logType);
+        }
+        // logType 为 null 时，不进行类型筛选，返回所有日志
+        // 避免在没有 log_type 字段时查询报错
+
+        Page<SysLog> page = page(sysLogQuery.toMpPageDefaultSortByCreateTimeDesc(), wrapper);
         if (SqlUtils.validSortField(sortBy)) {
             page.addOrder(new OrderItem().setColumn(sortBy).setAsc(isAsc));
         }
@@ -57,7 +71,3 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog>
         return PageVO.of(page, sysLogList);
     }
 }
-
-
-
-

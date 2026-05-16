@@ -15,6 +15,8 @@
             :size="72"
             color="#d97706"
             round
+            style="cursor: pointer"
+            @click="showAvatarModal = true"
           >
             {{ displayName.charAt(0).toUpperCase() }}
           </n-avatar>
@@ -65,6 +67,15 @@
           </n-button>
         </div>
       </div>
+
+      <!-- 头像放大弹窗 -->
+      <n-modal v-model:show="showAvatarModal" :close-on-esc="true" mask-closable preset="dialog" title="头像预览" :show-icon="false" style="width: 400px">
+        <div class="avatar-modal-content">
+          <n-avatar :size="300" color="#d97706" round>
+            {{ displayName.charAt(0).toUpperCase() }}
+          </n-avatar>
+        </div>
+      </n-modal>
     </div>
   </div>
 </template>
@@ -79,6 +90,7 @@ import type { UserInfo } from '@teng-boot/shared/types'
 const router = useRouter()
 const message = useMessage()
 const userInfo = ref<UserInfo | null>(null)
+const showAvatarModal = ref(false)
 
 onMounted(() => {
   userInfo.value = getUserInfo()

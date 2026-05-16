@@ -40,4 +40,10 @@ public class RoleVO implements Serializable {
 
     @Schema(description = "更新者ID")
     private Long updater;
+
+    @Schema(description = "创建人用户名")
+    private String creatorName;
+
+    @Schema(description = "更新人用户名")
+    private String updaterName;
 }

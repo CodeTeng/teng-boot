@@ -35,4 +35,6 @@ public class SysLogQuery extends PageQuery implements Serializable {
     private String ip;
     @Schema(description = "操作系统")
     private String os;
+    @Schema(description = "日志类型: 1-操作日志 2-登录日志 3-退出日志")
+    private Integer logType;
 }

@@ -46,6 +46,10 @@ public class UserVO implements Serializable {
     private Long creater;
     @Schema(description = "更新者id")
     private Long updater;
+    @Schema(description = "创建人用户名")
+    private String creatorName;
+    @Schema(description = "更新人用户名")
+    private String updaterName;
     @Schema(description = "用户token")
     private String token;
     @Schema(description = "RBAC角色名称")

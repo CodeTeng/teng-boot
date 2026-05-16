@@ -139,4 +139,26 @@ public class RbacServiceImpl implements RbacService {
             assignRole(user.getId(), roleKey);
         }
     }
+
+    @Override
+    public List<Long> getUserIdsByRoleKey(String roleKey) {
+        // 先查询角色ID
+        Role role = roleMapper.selectOne(
+                new LambdaQueryWrapper<Role>()
+                        .eq(Role::getRoleKey, roleKey));
+        if (role == null) {
+            return Collections.emptyList();
+        }
+        // 查询拥有该角色ID的用户
+        List<UserRole> userRoles = userRoleMapper.selectList(
+                new LambdaQueryWrapper<UserRole>()
+                        .eq(UserRole::getRoleId, role.getId()));
+        if (CollUtils.isEmpty(userRoles)) {
+            return Collections.emptyList();
+        }
+        return userRoles.stream()
+                .map(UserRole::getUserId)
+                .distinct()
+                .collect(Collectors.toList());
+    }
 }

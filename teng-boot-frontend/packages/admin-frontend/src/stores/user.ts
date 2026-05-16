@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { login as loginApi, getCurrentUser } from '@teng-boot/shared'
+import { login as loginApi, getCurrentUser, logout as logoutApi } from '@teng-boot/shared'
 import {
   setToken,
   setUserInfo,
@@ -37,7 +37,12 @@ export const useUserStore = defineStore('user', () => {
   }
 
   /** 退出登录 */
-  function logout() {
+  async function logout() {
+    try {
+      await logoutApi()
+    } catch {
+      // 忽略退出接口错误
+    }
     token.value = null
     userInfo.value = null
     removeToken()

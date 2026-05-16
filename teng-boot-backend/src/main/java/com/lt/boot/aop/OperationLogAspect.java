@@ -3,6 +3,7 @@ package com.lt.boot.aop;
 import com.lt.boot.annotation.LogRecord;
 import com.lt.boot.model.entity.SysLog;
 import com.lt.boot.model.entity.User;
+import com.lt.boot.model.enums.log.SysLogTypeEnum;
 import com.lt.boot.service.SysLogService;
 import com.lt.boot.service.UserService;
 import com.lt.boot.utils.UserThreadLocalUtils;
@@ -88,6 +89,7 @@ public class OperationLogAspect {
             sysLog.setParams(reqParam);
             sysLog.setIp(ip);
             sysLog.setOs(os);
+            sysLog.setLogType(SysLogTypeEnum.OPERATION.getCode());
             sysLogService.save(sysLog);
         }, handleSysLogTaskExecutor);
         return result;

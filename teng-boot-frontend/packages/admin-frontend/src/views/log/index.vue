@@ -2,61 +2,83 @@
   <div class="log-page">
     <!-- 页面标题 -->
     <div class="log-page__header">
-      <h2 class="log-page__title">操作日志</h2>
-      <p class="log-page__desc">查看系统操作记录和审计信息</p>
+      <h2 class="log-page__title">日志管理</h2>
+      <p class="log-page__desc">查看系统操作记录和登录退出日志</p>
     </div>
 
-    <!-- 搜索栏 -->
-    <el-card shadow="never" class="log-page__search-card">
-      <el-form :model="queryParams" inline class="log-page__search-form">
-        <el-form-item label="用户名">
-          <el-input
-            v-model="queryParams.username"
-            placeholder="请输入用户名"
-            clearable
-            style="width: 160px"
-          />
-        </el-form-item>
-        <el-form-item label="操作类型">
-          <el-select
-            v-model="queryParams.operation"
-            placeholder="请选择"
-            clearable
-            style="width: 140px"
-          >
-            <el-option label="全部" value="" />
-            <el-option label="POST" value="POST" />
-            <el-option label="PUT" value="PUT" />
-            <el-option label="DELETE" value="DELETE" />
-            <el-option label="GET" value="GET" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="操作系统">
-          <el-select
-            v-model="queryParams.os"
-            placeholder="请选择"
-            clearable
-            style="width: 130px"
-          >
-            <el-option label="全部" value="" />
-            <el-option label="Windows" value="Windows" />
-            <el-option label="macOS" value="macOS" />
-            <el-option label="Linux" value="Linux" />
-            <el-option label="Android" value="Android" />
-            <el-option label="iOS" value="iOS" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">
-            <el-icon><Search /></el-icon>
-            查询
-          </el-button>
-          <el-button @click="handleReset">
-            <el-icon><Refresh /></el-icon>
-            重置
-          </el-button>
-        </el-form-item>
-      </el-form>
+    <!-- Tab 切换 -->
+    <el-card shadow="never" class="log-page__tab-card">
+      <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+        <el-tab-pane label="操作日志" :name="1">
+          <template #label>
+            <span class="custom-tab-label">
+              <el-icon><Document /></el-icon>
+              操作日志
+            </span>
+          </template>
+        </el-tab-pane>
+        <el-tab-pane label="登录/退出日志" :name="2">
+          <template #label>
+            <span class="custom-tab-label">
+              <el-icon><Key /></el-icon>
+              登录/退出日志
+            </span>
+          </template>
+        </el-tab-pane>
+      </el-tabs>
+
+      <!-- 操作日志搜索栏 -->
+      <div v-if="activeTab === 1" class="log-page__search">
+        <el-form :model="queryParams" inline class="log-page__search-form">
+          <el-form-item label="用户名">
+            <el-input
+              v-model="queryParams.username"
+              placeholder="请输入用户名"
+              clearable
+              style="width: 160px"
+            />
+          </el-form-item>
+          <el-form-item label="操作类型">
+            <el-select
+              v-model="queryParams.operation"
+              placeholder="请选择"
+              clearable
+              style="width: 140px"
+            >
+              <el-option label="全部" value="" />
+              <el-option label="POST" value="POST" />
+              <el-option label="PUT" value="PUT" />
+              <el-option label="DELETE" value="DELETE" />
+              <el-option label="GET" value="GET" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="操作系统">
+            <el-select
+              v-model="queryParams.os"
+              placeholder="请选择"
+              clearable
+              style="width: 130px"
+            >
+              <el-option label="全部" value="" />
+              <el-option label="Windows" value="Windows" />
+              <el-option label="macOS" value="macOS" />
+              <el-option label="Linux" value="Linux" />
+              <el-option label="Android" value="Android" />
+              <el-option label="iOS" value="iOS" />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              查询
+            </el-button>
+            <el-button @click="handleReset">
+              <el-icon><Refresh /></el-icon>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
     </el-card>
 
     <!-- 数据表格 -->
@@ -110,13 +132,14 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { Search, Refresh } from '@element-plus/icons-vue'
+import { Search, Refresh, Document, Key } from '@element-plus/icons-vue'
 import { listLogByPage } from '@teng-boot/shared/api/log'
 import type { SysLog } from '@teng-boot/shared/types'
 
 const loading = ref(false)
 const logList = ref<SysLog[]>([])
 const total = ref(0)
+const activeTab = ref<number>(1)
 
 const queryParams = reactive({
   pageNo: 1,
@@ -124,6 +147,7 @@ const queryParams = reactive({
   username: undefined as string | undefined,
   operation: undefined as string | undefined,
   os: undefined as string | undefined,
+  logType: 1,
 })
 
 /** 操作类型对应的 tag 颜色 */
@@ -157,6 +181,7 @@ async function loadLogList() {
       username: queryParams.username || undefined,
       operation: queryParams.operation || undefined,
       os: queryParams.os || undefined,
+      logType: queryParams.logType,
     })
     if (res.code === 200) {
       logList.value = res.data.list
@@ -167,6 +192,18 @@ async function loadLogList() {
   } finally {
     loading.value = false
   }
+}
+
+function handleTabChange(tab: number | string) {
+  queryParams.pageNo = 1
+  // tab 1: 操作日志 (logType=1), tab 2: 登录/退出日志 (logType=2,3)
+  if (tab === 1) {
+    queryParams.logType = 1
+  } else {
+    // 登录/退出日志需要同时显示登录(2)和退出(3)类型
+    queryParams.logType = undefined
+  }
+  loadLogList()
 }
 
 function handleSearch() {

@@ -52,6 +52,8 @@ public class SysLog implements Serializable {
     private LocalDateTime createTime;
     @Schema(description = "是否删除 0-未删除 1-已删除")
     private Integer isDelete;
+    @Schema(description = "日志类型: 1-操作日志 2-登录日志 3-退出日志")
+    private Integer logType;
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

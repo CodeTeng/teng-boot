@@ -79,6 +79,13 @@ public class UserController {
         return ResultUtils.success(currentUser);
     }
 
+    @PostMapping("/logout")
+    @Operation(summary = "用户退出登录")
+    public BaseResponse<Boolean> userLogout() {
+        userService.userLogout();
+        return ResultUtils.success(true);
+    }
+
     @PutMapping("/update/myPwd")
     @Operation(summary = "当前用户个人修改密码")
     @LogRecord("当前用户个人修改密码")
